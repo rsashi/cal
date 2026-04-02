@@ -13,6 +13,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 33
+          build-tools-version: 35.0.0
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -34,7 +40,7 @@ jobs:
           fullscreen = 0
           android.api = 33
           android.minapi = 21
-          android.ndk = 25b
+          android.ndk = 25.1.8937393
           android.archs = arm64-v8a
           [buildozer]
           log_level = 2
