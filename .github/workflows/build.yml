@@ -1,51 +1,37 @@
+# This workflow builds the Android APK using Gradle with caching
+
 name: Build Android APK
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: kivy/kivy-docker:latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          python-version: '3.11'
+          java-version: '11'
 
-      - name: Install dependencies
-        run: |
-          pip install buildozer cython
-          apt-get update && apt-get install -y zip unzip
-
-      - name: Create buildozer.spec
-        run: |
-          cat > buildozer.spec << 'EOF'
-          [app]
-          title = Calculator
-          package.name = calculator
-          package.domain = com.example
-          source.dir = .
-          source.include_exts = py
-          version = 1.0
-          requirements = python3,kivy==2.3.0
-          orientation = portrait
-          fullscreen = 0
-          android.api = 33
-          android.minapi = 21
-          android.ndk = 25b
-          android.archs = arm64-v8a
-          [buildozer]
-          log_level = 2
-          EOF
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: ~./gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Build APK
-        run: buildozer android debug
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v2
         with:
-          name: calculator-apk
-          path: bin/*.apk
+          name: android-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
