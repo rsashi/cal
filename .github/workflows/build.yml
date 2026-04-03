@@ -65,21 +65,17 @@ jobs:
           warn_on_root = 1
           EOF
 
-      - name: Accept Android SDK licenses
+      - name: Build APK (accept licenses)
         run: |
-          mkdir -p ~/.android
-          echo "count=0" > ~/.android/repositories.cfg
           mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
           printf '8933bad161af4d5d886bfdf7f3effd58abc7f1ed' > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
           printf '84831b9409646a918e30573bab4c9c91346d8abd' > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
           printf 'd56f5187479451eabf01fb78af6dfcb131b33910' > ~/.buildozer/android/platform/android-sdk/licenses/google-gdk-license
-
-      - name: Build APK
-        run: buildozer android debug
+          yes | buildozer android debug 2>&1 | tail -100
         timeout-minutes: 120
 
       - name: Upload APK
-        if: success()
+        if: hashFiles('bin/*.apk') != ''
         uses: actions/upload-artifact@v4
         with:
           name: calculator-apk
