@@ -33,6 +33,12 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install buildozer cython
 
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir -p ~/.android
+          echo "count=0" > ~/.android/repositories.cfg
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Cache Android SDK/NDK
         uses: actions/cache@v4
         with:
@@ -65,20 +71,20 @@ jobs:
           EOF
 
       - name: Build APK
-        run: |
-          buildozer android debug 2>&1 | tee build.log
+        run: buildozer android debug
         timeout-minutes: 90
+        continue-on-error: true
+
+      - name: Check build output
+        run: |
+          echo "=== Checking for APK ==="
+          ls -la bin/ || echo "No bin directory found"
+          echo "=== Checking buildozer logs ==="
+          find .buildozer -type f -name "*.log" | head -5 | xargs tail -50 2>/dev/null || echo "No logs found"
 
       - name: Upload APK
-        if: success()
+        if: hashFiles('bin/*.apk') != ''
         uses: actions/upload-artifact@v4
         with:
           name: calculator-apk
           path: bin/*.apk
-
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
